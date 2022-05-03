@@ -1,3 +1,7 @@
+export function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
+}
+
 function scaleToWindow(canvas, backgroundColor) {
     var scaleX, scaleY, scale, center;
   
@@ -75,3 +79,4 @@ function scaleToWindow(canvas, backgroundColor) {
     //for correct hit testing between the pointer and sprites
     return scale;
   }
+
