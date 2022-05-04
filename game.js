@@ -12,7 +12,6 @@ document.getElementsByClassName("app")[0].appendChild(app.view);
 
 const container = new PIXI.Container();
 const shipTypes = [PIXI.Texture.from('images/ShipCruiserHull.png'),
-                   PIXI.Texture.from('images/ShipPatrolHull.png'),
                    PIXI.Texture.from('images/ShipBattleshipHull.png'),
                    PIXI.Texture.from('images/ShipDestroyerHull.png'),
                    PIXI.Texture.from('images/ShipRescue.png')];
@@ -21,6 +20,13 @@ const angles = [0, 90, 180, 270];
 const totalShips = 5;
 const spacing = 100;
 const xOffset = 150;
+const style = new PIXI.TextStyle({
+  fontSize: 18,
+  fontFamily: 'Arial',
+  fill: ['#ffffff', '#00ff99']})
+const basicText = new PIXI.Text(`Ships remaining: ${totalShips}`, style);
+basicText.x = 0;
+basicText.y = 0;
 
 app.stage.addChild(container);
 
@@ -53,22 +59,43 @@ for (let i=0; i < totalShips; i++) {
     ship.on('pointerdown', onClick);
         
     ships.push(ship);
+
     app.stage.addChild(ship);
+    app.stage.addChild(basicText);
+    app.ticker.add(gameLoop);
 }
 
-app.ticker.add((delta) => {
-    for (let i=0; i < ships.length; i++) {
-        let j = i + 1
-        moveShip(ships[i], Math.random());
-        outOfBounds(ships[i]);
-        if (shipIntersect(ships[i], ships[j % ships.length])) {
-          let explosionSprite = new PIXI.Sprite(explosion);
-          explosionSprite.x = ships[i].x;
-          explosionSprite.y = ships[i].y;
-          app.stage.addChild(explosionSprite)
-        }
+function gameLoop(delta) {
+  for (let i=0; i < ships.length; i++) {
+    let shipA = ships[i];
+    // Move ships around the stage
+    moveShip(ships[i], Math.random());
+    // Check if ships are out of bounds of stage
+    outOfBounds(ships[i]);
+
+    for (let j = i + 1; j < ships.length; j++) {
+      let shipB = ships[j];
+      // Check colision between two ships
+      if (shipIntersect(ships[i], ships[j])) {
+        explode(ships[i], ships[j]);
+        app.ticker.stop();     
+      }
     }
-});
+  }
+}
+
+function explode(shipA, shipB) {
+
+  let explosionA = new PIXI.Sprite(explosion);
+
+  explosionA.x = shipA.x;
+  explosionA.y = shipB.y;
+
+  explosionA.x = shipA.x - shipA.width / 2; 
+  explosionA.y = shipA.y - shipA.height / 2;
+ 
+  app.stage.addChild(explosionA)
+}
 
 function moveShip(ship, speed) {
     let angle = Math.round(ship.angle % 360);
@@ -106,61 +133,12 @@ function outOfBounds (ship) {
   } 
 }
 
-function hitTestShips(ship1, ship2) {
-
-  //Define the variables we'll need to calculate
-  let hit, combinedHalfWidths, combinedHalfHeights, vx, vy;
-
-  //hit will determine whether there's a collision
-  hit = false;
-
-  //Find the center points of each sprite
-  ship1.centerX = ship1.x + ship1.width / 2;
-  ship1.centerY = ship1.y + ship1.height / 2;
-  ship2.centerX = ship2.x + ship2.width / 2;
-  ship2.centerY = ship2.y + ship2.height / 2;
-
-  //Find the half-widths and half-heights of each sprite
-  ship1.halfWidth = ship1.width / 2;
-  ship1.halfHeight = ship1.height / 2;
-  ship2.halfWidth = ship2.width / 2;
-  ship2.halfHeight = ship2.height / 2;
-
-  //Calculate the distance vector between the sprites
-  vx = ship1.centerX - ship2.centerX;
-  vy = ship1.centerY - ship2.centerY;
-
-  //Figure out the combined half-widths and half-heights
-  combinedHalfWidths = ship1.halfWidth + ship2.halfWidth;
-  combinedHalfHeights = ship1.halfHeight + ship2.halfHeight;
-
-  //Check for a collision on the x axis
-  if (Math.abs(vx) < combinedHalfWidths) {
-
-    //A collision might be occurring. Check for a collision on the y axis
-    if (Math.abs(vy) < combinedHalfHeights) {
-
-      //There's definitely a collision happening
-      hit = true;
-    } else {
-
-      //There's no collision on the y axis
-      hit = false;
-    }
-  } else {
-
-    //There's no collision on the x axis
-    hit = false;
-  }
-
-  //`hit` will be either `true` or `false`
-  return hit;
-};
 
 function shipIntersect(shipA, shipB) {
   let aBox = shipA.getBounds();
   let bBox = shipB.getBounds();
 
+  //console.log(aBox);
   return aBox.x + aBox.width > bBox.x &&
          aBox.x < bBox.x + bBox.width &&
          aBox.y + aBox.height > bBox.y &&
