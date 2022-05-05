@@ -10,33 +10,29 @@ const app = new PIXI.Application({
 
 document.getElementsByClassName("app")[0].appendChild(app.view);
 
-const container = new PIXI.Container();
-const shipTypes = [PIXI.Texture.from('images/ShipCruiserHull.png'),
-                   PIXI.Texture.from('images/ShipBattleshipHull.png'),
-                   PIXI.Texture.from('images/ShipDestroyerHull.png'),
-                   PIXI.Texture.from('images/ShipRescue.png')];
-const explosion = PIXI.Texture.from('images/explosion.png');
-const angles = [0, 90, 180, 270];
-const totalShips = 5;
-const spacing = 100;
-const xOffset = 150;
-const style = new PIXI.TextStyle({
-  fontSize: 18,
-  fontFamily: 'Arial',
-  fill: ['#ffffff', '#00ff99']})
-const basicText = new PIXI.Text(`Ships remaining: ${totalShips}`, style);
-basicText.x = 0;
-basicText.y = 0;
+PIXI.Loader.shared.add("images/spritesheet.json").load(setup);
+//let ships = [];
+let shipsContainer = new PIXI.Container();
+let rocks = [];
+app.ticker.add(gameLoop);
 
-app.stage.addChild(container);
-
-let ships = [];
-
-//console.log(app.options.width, app.options.height)
-
-for (let i=0; i < totalShips; i++) {
-    let shipIndex = getRandomInt(shipTypes.length)
-    let ship = new PIXI.Sprite(shipTypes[shipIndex]);
+function setup(){
+  
+  // game settings
+  const angles = [0, 90, 180, 270];
+  const totalShips = 2;
+  const spacing = 100;
+  const xOffset = 150;
+  // load the spritesheet images
+  let sheet = PIXI.Loader.shared.resources["images/spritesheet.json"].spritesheet;
+  //bunny = new PIXI.Sprite(sheet.textures["bunny.png"]);
+  const shipTypes = ['ShipCruiserHull.png', 'ShipBattleshipHull.png',
+                     'ShipDestroyerHull.png', 'ShipRescue.png',]
+ 
+  // Adding ships 
+  for (let i=0; i < totalShips; i++) {
+    let shipType = shipTypes[getRandomInt(shipTypes.length)]
+    let ship = new PIXI.Sprite(sheet.textures[shipType]);
     let x = spacing * i + xOffset;
     let y = getRandomInt(app.screen.height - ship.height);
 
@@ -57,36 +53,112 @@ for (let i=0; i < totalShips; i++) {
 
     // Pointers normalize touch and mouse
     ship.on('pointerdown', onClick);
-        
-    ships.push(ship);
+    
+    shipsContainer.addChild(ship)
+    //ships.push(ship);
+  }
 
-    app.stage.addChild(ship);
-    app.stage.addChild(basicText);
-    app.ticker.add(gameLoop);
+  app.stage.addChild(shipsContainer);
+  let rocksContainer = new PIXI.Container();
+  
+  // Adding rocks
+  let rockTopLeft = new PIXI.Sprite(sheet.textures['rocks.png']);
+  rockTopLeft.x = app.screen.width / 2  - 50;
+  rockTopLeft.y = 0;
+  rocks.push(rockTopLeft);
+  rocksContainer.addChild(rockTopLeft)
+  //app.stage.addChild(rockTopLeft);
+
+  let rockMidLeft = new PIXI.Sprite(sheet.textures['rocks.png']);
+  rockMidLeft.x = app.screen.width / 2  - 50;
+  rockMidLeft.y = 30;
+  rocks.push(rockMidLeft);
+  rocksContainer.addChild(rockMidLeft)
+  //app.stage.addChild(rockMidLeft);
+
+  let rockBottomLeft = new PIXI.Sprite(sheet.textures['rocks.png']);
+  rockBottomLeft.x = app.screen.width / 2  - 50;
+  rockBottomLeft.y = 60;
+  rocks.push(rockBottomLeft);
+  rocksContainer.addChild(rockBottomLeft)
+  //app.stage.addChild(rockBottomLeft);
+
+  let rockTopRight = new PIXI.Sprite(sheet.textures['rocks.png']);
+  rockTopRight.x = app.screen.width / 2  + 50;
+  rockTopRight.y = 0;
+  rocks.push(rockTopRight);
+  rocksContainer.addChild(rockTopRight)
+  //app.stage.addChild(rockTopRight);
+
+  let rockBottomRight = new PIXI.Sprite(sheet.textures['rocks.png']);
+  rockBottomRight.x = app.screen.width / 2  + 50;
+  rockBottomRight.y = 30;
+  rocks.push(rockBottomRight);
+  rocksContainer.addChild(rockBottomRight)
+  //app.stage.addChild(rockBottomRight);
+
+  let rockMidRight = new PIXI.Sprite(sheet.textures['rocks.png']);
+  rockMidRight.x = app.screen.width / 2  + 50;
+  rockMidRight.y = 60;
+  rocks.push(rockMidRight);
+  rocksContainer.addChild(rockMidRight)
+  //app.stage.addChild(rockMidRight);
+  console.log(rocksContainer.children.length)
+  app.stage.addChild(rocksContainer)
 }
 
+console.log(app.stage.children)
+let score = 2;
+
 function gameLoop(delta) {
-  for (let i=0; i < ships.length; i++) {
+  for (let i=0; i < shipsContainer.children.lenght; i++) {
     let shipA = ships[i];
     // Move ships around the stage
-    moveShip(ships[i], Math.random());
+    moveShip(shipA, 0.5);
     // Check if ships are out of bounds of stage
-    outOfBounds(ships[i]);
-
+    outOfBounds(shipA);
+    // Check colision between one ship and all others
     for (let j = i + 1; j < ships.length; j++) {
       let shipB = ships[j];
-      // Check colision between two ships
-      if (shipIntersect(ships[i], ships[j])) {
-        explode(ships[i], ships[j]);
+      if (shipIntersect(shipA, shipB)) {
+        explode(shipA, shipB);
+        youLose();
         app.ticker.stop();     
+      }
+    }
+    // Check collision between one ship and all rocks
+    for (let k=0; k < rocks.length; k++) {
+      if (shipIntersect(shipA, rocks[k])) {
+        console.log('error')
+        explode(shipA, rocks[k]);
+        youLose();
+        app.ticker.stop();  
+      }
+    }
+    if (shipInDock(shipA)) {
+      removeShip(shipA);
+      score -= 1;
+      if (score == 0) {
+        youWin();
+        app.ticker.stop();
       }
     }
   }
 }
 
-function explode(shipA, shipB) {
+function removeShip(ship) {
+  // remove ship from stage
+  app.stage.removeChild(ship)
+  // remove ship from ships list
+  const index = ships.indexOf(ship);
+      if (index > -1) {
+        ships.splice(index, 1); // 2nd parameter means remove one item only
+      }
+} 
 
-  let explosionA = new PIXI.Sprite(explosion);
+function explode(shipA, shipB) {
+  let sheet = PIXI.Loader.shared.resources["images/spritesheet.json"].spritesheet;
+  let explosionA = new PIXI.Sprite(sheet.textures['explosion.png']);
 
   explosionA.x = shipA.x;
   explosionA.y = shipB.y;
@@ -133,7 +205,6 @@ function outOfBounds (ship) {
   } 
 }
 
-
 function shipIntersect(shipA, shipB) {
   let aBox = shipA.getBounds();
   let bBox = shipB.getBounds();
@@ -143,4 +214,54 @@ function shipIntersect(shipA, shipB) {
          aBox.x < bBox.x + bBox.width &&
          aBox.y + aBox.height > bBox.y &&
          aBox.y < bBox.y + bBox.height; 
+}
+
+  rocks.forEach((rock) => {
+    let bBox = rock.getBounds();
+    
+    return aBox.x + aBox.width > bBox.x &&
+         aBox.x < bBox.x + bBox.width &&
+         aBox.y + aBox.height > bBox.y &&
+         aBox.y < bBox.y + bBox.height;
+})
+
+function youLose() {
+  const lostStyle = new PIXI.TextStyle({fontSize: 24, fontFamily: 'Arial', fill: ['#ff0019', '#ff0019']})
+  const lostText = new PIXI.Text('You lost', lostStyle);
+  lostText.anchor.x = 0.5;
+  lostText.anchor.y = 0.5;
+  lostText.x = app.screen.width / 2;
+  lostText.y = app.screen.height / 2;
+  app.stage.addChild(lostText)
+}
+
+function youWin() {
+  const winStyle = new PIXI.TextStyle({fontSize: 24, fontFamily: 'Arial', fill: ['#00FF009', '#00FF00']})
+  const winText = new PIXI.Text('You won!', winStyle);
+  winText.anchor.x = 0.5;
+  winText.anchor.y = 0.5;
+  winText.x = app.screen.width / 2;
+  winText.y = app.screen.height / 2;
+  app.stage.addChild(winText)
+  console.log('CTF{Aye_Aye_Captain!}')
+}
+
+function shipInDock(ship) {
+  let aBox = ship.getBounds();
+
+  if (aBox.x > app.screen.width / 2  - 50 && 
+      aBox.x < app.screen.width / 2  + 50 &&
+      aBox.y < 5) {
+        return true;
+  }
+  return false;
+}
+
+function scoreText(score) {
+   // Adding text
+   const style = new PIXI.TextStyle({fontSize: 18, fontFamily: 'Arial', fill: ['#ffffff', '#00ff99']})
+   const basicText = new PIXI.Text(`Ships remaining: ${score}`, style);
+   basicText.x = 5;
+   basicText.y = 5; 
+   app.stage.addChild(basicText);
 }
