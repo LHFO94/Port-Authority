@@ -11,7 +11,7 @@ const app = new PIXI.Application({
 document.getElementsByClassName("app")[0].appendChild(app.view);
 
 PIXI.Loader.shared.add("images/spritesheet.json").load(setup);
-//let ships = [];
+let ships = [];
 let shipsContainer = new PIXI.Container();
 let rocks = [];
 app.ticker.add(gameLoop);
@@ -25,10 +25,15 @@ function setup(){
   const xOffset = 150;
   // load the spritesheet images
   let sheet = PIXI.Loader.shared.resources["images/spritesheet.json"].spritesheet;
-  //bunny = new PIXI.Sprite(sheet.textures["bunny.png"]);
   const shipTypes = ['ShipCruiserHull.png', 'ShipBattleshipHull.png',
                      'ShipDestroyerHull.png', 'ShipRescue.png',]
- 
+  
+  const style = new PIXI.TextStyle({fontSize: 18, fontFamily: 'Arial', fill: ['#ffffff', '#00ff99']})
+  const basicText = new PIXI.Text(`Ships remaining: ${score}`, style);
+  basicText.x = 5;
+  basicText.y = 5; 
+  app.stage.addChild(basicText);
+  
   // Adding ships 
   for (let i=0; i < totalShips; i++) {
     let shipType = shipTypes[getRandomInt(shipTypes.length)]
@@ -54,8 +59,8 @@ function setup(){
     // Pointers normalize touch and mouse
     ship.on('pointerdown', onClick);
     
-    shipsContainer.addChild(ship)
-    //ships.push(ship);
+    shipsContainer.addChild(ship);
+    ships.push(ship);
   }
 
   app.stage.addChild(shipsContainer);
@@ -66,52 +71,45 @@ function setup(){
   rockTopLeft.x = app.screen.width / 2  - 50;
   rockTopLeft.y = 0;
   rocks.push(rockTopLeft);
-  rocksContainer.addChild(rockTopLeft)
-  //app.stage.addChild(rockTopLeft);
+  app.stage.addChild(rockTopLeft);
 
   let rockMidLeft = new PIXI.Sprite(sheet.textures['rocks.png']);
   rockMidLeft.x = app.screen.width / 2  - 50;
   rockMidLeft.y = 30;
   rocks.push(rockMidLeft);
-  rocksContainer.addChild(rockMidLeft)
-  //app.stage.addChild(rockMidLeft);
+  app.stage.addChild(rockMidLeft);
 
   let rockBottomLeft = new PIXI.Sprite(sheet.textures['rocks.png']);
   rockBottomLeft.x = app.screen.width / 2  - 50;
   rockBottomLeft.y = 60;
   rocks.push(rockBottomLeft);
-  rocksContainer.addChild(rockBottomLeft)
-  //app.stage.addChild(rockBottomLeft);
+  app.stage.addChild(rockBottomLeft);
 
   let rockTopRight = new PIXI.Sprite(sheet.textures['rocks.png']);
   rockTopRight.x = app.screen.width / 2  + 50;
   rockTopRight.y = 0;
   rocks.push(rockTopRight);
-  rocksContainer.addChild(rockTopRight)
-  //app.stage.addChild(rockTopRight);
+  app.stage.addChild(rockTopRight);
 
   let rockBottomRight = new PIXI.Sprite(sheet.textures['rocks.png']);
   rockBottomRight.x = app.screen.width / 2  + 50;
   rockBottomRight.y = 30;
   rocks.push(rockBottomRight);
-  rocksContainer.addChild(rockBottomRight)
-  //app.stage.addChild(rockBottomRight);
+  app.stage.addChild(rockBottomRight);
 
   let rockMidRight = new PIXI.Sprite(sheet.textures['rocks.png']);
   rockMidRight.x = app.screen.width / 2  + 50;
   rockMidRight.y = 60;
   rocks.push(rockMidRight);
   rocksContainer.addChild(rockMidRight)
-  //app.stage.addChild(rockMidRight);
-  console.log(rocksContainer.children.length)
-  app.stage.addChild(rocksContainer)
+  app.stage.addChild(rockMidRight);
 }
 
 console.log(app.stage.children)
 let score = 2;
 
 function gameLoop(delta) {
-  for (let i=0; i < shipsContainer.children.lenght; i++) {
+  for (let i=0; i < ships.length; i++) {
     let shipA = ships[i];
     // Move ships around the stage
     moveShip(shipA, 0.5);
