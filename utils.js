@@ -2,6 +2,10 @@ export function getRandomInt(max) {
   return Math.floor(Math.random() * max);
 }
 
+export function onClick() {
+  this.angle += 90;
+}
+
 function scaleToWindow(canvas, backgroundColor) {
     var scaleX, scaleY, scale, center;
   

@@ -1,4 +1,5 @@
-import { getRandomInt } from './utils.js';
+import { initLevel1 } from './levels.js';
+
 
 const app = new PIXI.Application({
     width: 800, 
@@ -10,103 +11,27 @@ const app = new PIXI.Application({
 
 document.getElementsByClassName("app")[0].appendChild(app.view);
 
+// Initiatlize a few variables
 PIXI.Loader.shared.add("images/spritesheet.json").load(setup);
-let ships = [];
 let shipsContainer = new PIXI.Container();
+let textContainer = new PIXI.Container();
+let ships = [];
 let rocks = [];
+let score;
+let level = 1; 
+
 app.ticker.add(gameLoop);
 
-function setup(){
-  
-  // game settings
-  const angles = [0, 90, 180, 270];
-  const totalShips = 2;
-  const spacing = 100;
-  const xOffset = 150;
-  // load the spritesheet images
-  let sheet = PIXI.Loader.shared.resources["images/spritesheet.json"].spritesheet;
-  const shipTypes = ['ShipCruiserHull.png', 'ShipBattleshipHull.png',
-                     'ShipDestroyerHull.png', 'ShipRescue.png',]
-  
-  const style = new PIXI.TextStyle({fontSize: 18, fontFamily: 'Arial', fill: ['#ffffff', '#00ff99']})
-  const basicText = new PIXI.Text(`Ships remaining: ${score}`, style);
-  basicText.x = 5;
-  basicText.y = 5; 
-  app.stage.addChild(basicText);
-  
-  // Adding ships 
-  for (let i=0; i < totalShips; i++) {
-    let shipType = shipTypes[getRandomInt(shipTypes.length)]
-    let ship = new PIXI.Sprite(sheet.textures[shipType]);
-    let x = spacing * i + xOffset;
-    let y = getRandomInt(app.screen.height - ship.height);
-
-    let angle_index = math.floor(Math.random() * shipTypes.length);
-    let angle = angles[angle_index];
-
-    ship.x = x;
-    ship.y = y;
-    ship.vx = 0;
-    ship.vy = 0;
-    ship.anchor.x = 0.5;
-    ship.anchor.y = 0.5;
-    ship.angle = angle;
-
-    // Opt-in to interactivity
-    ship.interactive = true;
-    ship.buttonMode = true;
-
-    // Pointers normalize touch and mouse
-    ship.on('pointerdown', onClick);
-    
-    shipsContainer.addChild(ship);
-    ships.push(ship);
+function setup() {
+  if (level == 1) {
+    score = 2;
+    initLevel1(app, score, shipsContainer, ships, textContainer, rocks);
   }
-
-  app.stage.addChild(shipsContainer);
-  let rocksContainer = new PIXI.Container();
-  
-  // Adding rocks
-  let rockTopLeft = new PIXI.Sprite(sheet.textures['rocks.png']);
-  rockTopLeft.x = app.screen.width / 2  - 50;
-  rockTopLeft.y = 0;
-  rocks.push(rockTopLeft);
-  app.stage.addChild(rockTopLeft);
-
-  let rockMidLeft = new PIXI.Sprite(sheet.textures['rocks.png']);
-  rockMidLeft.x = app.screen.width / 2  - 50;
-  rockMidLeft.y = 30;
-  rocks.push(rockMidLeft);
-  app.stage.addChild(rockMidLeft);
-
-  let rockBottomLeft = new PIXI.Sprite(sheet.textures['rocks.png']);
-  rockBottomLeft.x = app.screen.width / 2  - 50;
-  rockBottomLeft.y = 60;
-  rocks.push(rockBottomLeft);
-  app.stage.addChild(rockBottomLeft);
-
-  let rockTopRight = new PIXI.Sprite(sheet.textures['rocks.png']);
-  rockTopRight.x = app.screen.width / 2  + 50;
-  rockTopRight.y = 0;
-  rocks.push(rockTopRight);
-  app.stage.addChild(rockTopRight);
-
-  let rockBottomRight = new PIXI.Sprite(sheet.textures['rocks.png']);
-  rockBottomRight.x = app.screen.width / 2  + 50;
-  rockBottomRight.y = 30;
-  rocks.push(rockBottomRight);
-  app.stage.addChild(rockBottomRight);
-
-  let rockMidRight = new PIXI.Sprite(sheet.textures['rocks.png']);
-  rockMidRight.x = app.screen.width / 2  + 50;
-  rockMidRight.y = 60;
-  rocks.push(rockMidRight);
-  rocksContainer.addChild(rockMidRight)
-  app.stage.addChild(rockMidRight);
+  if (level == 2) {
+    score = 2;
+    initLevel1(app, score, shipsContainer, ships, textContainer, rocks);
+  }
 }
-
-console.log(app.stage.children)
-let score = 2;
 
 function gameLoop(delta) {
   for (let i=0; i < ships.length; i++) {
@@ -121,13 +46,12 @@ function gameLoop(delta) {
       if (shipIntersect(shipA, shipB)) {
         explode(shipA, shipB);
         youLose();
-        app.ticker.stop();     
+        app.ticker.stop(); 
       }
     }
     // Check collision between one ship and all rocks
     for (let k=0; k < rocks.length; k++) {
       if (shipIntersect(shipA, rocks[k])) {
-        console.log('error')
         explode(shipA, rocks[k]);
         youLose();
         app.ticker.stop();  
@@ -138,15 +62,20 @@ function gameLoop(delta) {
       score -= 1;
       if (score == 0) {
         youWin();
-        app.ticker.stop();
+        level = 2;
+        app.stage.removeChild(textContainer);
+        app.stage.removeChild(winText);
+        setup();
+        //app.ticker.stop();
       }
+      updateScoreText(score);
     }
   }
 }
 
 function removeShip(ship) {
   // remove ship from stage
-  app.stage.removeChild(ship)
+  shipsContainer.removeChild(ship)
   // remove ship from ships list
   const index = ships.indexOf(ship);
       if (index > -1) {
@@ -188,11 +117,6 @@ function moveShip(ship, speed) {
     }
 }
     
-function onClick() {
-    console.log(this.angle)
-    this.angle += 90;
-}
-
 function outOfBounds (ship) {
   // Horizontal out of bounds
   if (ship.x < 0 || ship.x > (app.screen.width - 50)) {
@@ -234,8 +158,8 @@ function youLose() {
 }
 
 function youWin() {
-  const winStyle = new PIXI.TextStyle({fontSize: 24, fontFamily: 'Arial', fill: ['#00FF009', '#00FF00']})
-  const winText = new PIXI.Text('You won!', winStyle);
+  const winStyle = new PIXI.TextStyle({fontSize: 24, fontFamily: 'Arial', fill: ['#00FF00', '#00FF00']})
+  const winText = new PIXI.Text('You won', winStyle);
   winText.anchor.x = 0.5;
   winText.anchor.y = 0.5;
   winText.x = app.screen.width / 2;
@@ -255,11 +179,12 @@ function shipInDock(ship) {
   return false;
 }
 
-function scoreText(score) {
-   // Adding text
-   const style = new PIXI.TextStyle({fontSize: 18, fontFamily: 'Arial', fill: ['#ffffff', '#00ff99']})
-   const basicText = new PIXI.Text(`Ships remaining: ${score}`, style);
-   basicText.x = 5;
-   basicText.y = 5; 
-   app.stage.addChild(basicText);
+function updateScoreText(score) {
+  textContainer.children.forEach((message) => {
+    message.text = `Number of ships remaining: ${score}`
+  })
+}
+
+function startOverButton() {
+
 }
