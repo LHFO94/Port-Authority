@@ -15,6 +15,7 @@ document.getElementsByClassName("app")[0].appendChild(app.view);
 PIXI.Loader.shared.add("images/spritesheet.json").load(setup);
 let shipsContainer = new PIXI.Container();
 let textContainer = new PIXI.Container();
+let menuScreen = new PIXI.Container();
 let ships = [];
 let rocks = [];
 let score;
@@ -24,11 +25,13 @@ app.ticker.add(gameLoop);
 
 function setup() {
   if (level == 1) {
-    score = 2;
+    score = 1;
     initLevel1(app, score, shipsContainer, ships, textContainer, rocks);
   }
   if (level == 2) {
-    score = 2;
+    menuScreen.visible = false;
+    score = 3;
+    updateScoreText(score);
     initLevel1(app, score, shipsContainer, ships, textContainer, rocks);
   }
 }
@@ -37,7 +40,7 @@ function gameLoop(delta) {
   for (let i=0; i < ships.length; i++) {
     let shipA = ships[i];
     // Move ships around the stage
-    moveShip(shipA, 0.5);
+    moveShip(shipA, 2);
     // Check if ships are out of bounds of stage
     outOfBounds(shipA);
     // Check colision between one ship and all others
@@ -61,11 +64,12 @@ function gameLoop(delta) {
       removeShip(shipA);
       score -= 1;
       if (score == 0) {
-        youWin();
+        initMenu();
+        //youWin();
         level = 2;
-        app.stage.removeChild(textContainer);
-        app.stage.removeChild(winText);
-        setup();
+        //app.stage.removeChild(textContainer);
+       // app.stage.removeChild(winTextContainer);
+        //setup();
         //app.ticker.stop();
       }
       updateScoreText(score);
@@ -164,7 +168,7 @@ function youWin() {
   winText.anchor.y = 0.5;
   winText.x = app.screen.width / 2;
   winText.y = app.screen.height / 2;
-  app.stage.addChild(winText)
+  app.stage.addChild(winText);
   console.log('CTF{Aye_Aye_Captain!}')
 }
 
@@ -186,5 +190,51 @@ function updateScoreText(score) {
 }
 
 function startOverButton() {
-
+  console.log('LOl!')
 }
+
+function initMenu() {
+  // menu screen setup
+  menuScreen.visible = true;
+  let blueRect = new PIXI.Graphics();
+  blueRect.beginFill(0x0000FF);
+  blueRect.drawRect(0,0,app.view.width, app.view.height);
+  blueRect.alpha = 0.5;
+  menuScreen.addChild(blueRect);
+
+  // menu button
+  let texture = PIXI.Texture.from('images/playbutton.png');
+  let playButton = new PIXI.Sprite(texture)
+  console.log(playButton)
+  playButton.anchor.set(0.5);
+  playButton.alpha = 1;
+  playButton.scale.x *= 0.5;
+  playButton.scale.y *= 0.5;
+  playButton.x = app.view.width / 2;
+  playButton.y = app.view.height / 2;
+  playButton.interactive = true;
+  playButton.buttonMode = true;
+  playButton.alpha = 0.7;
+  playButton.on('pointerdown', () => {
+    playButton.alpha = 0.5;
+    setup();
+  });
+  menuScreen.addChild(playButton);
+
+  // menu text
+  let menuText = new PIXI.Text("Click the button to continue");
+  menuText.anchor.set(0.5);
+  menuText.x = app.view.width / 2;
+  menuText.y = (app.view.height / 4) * 1.5;
+
+  menuText.style = new PIXI.TextStyle({
+    fontSize: 18, 
+    fontFamily: 'Arial', 
+    fill: ['#ffffff', '#00ff99']
+  })
+  menuScreen.addChild(menuText);
+
+  app.stage.addChild(menuScreen);
+}
+
+

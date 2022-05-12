@@ -1,8 +1,8 @@
-# Port Authority Hacky Holidays 
+# Port Authority - Hacky Holidays Programming Challenge
 
 ## Intro
 
-The port has been taken over by a alogirthm that has gone haywire, can you step in and restore the port authority?
+The port has been taken over by an algorithm that has gone haywire, can you step in and restore authority over the port?
 
 ## Description
 
